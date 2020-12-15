@@ -1,0 +1,12 @@
+name: Run Tests
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - uses: icepuma/rust-action@1.48.0
+        with:
+          args: cargo test
