@@ -122,6 +122,13 @@ static FEATURES: &[Feature] = &[
         }],
     },
     Feature {
+        name: "VMX Preemption Timer        ",
+        must_match: &[MsrMatch {
+            index: 0x481,
+            must_be_set: 1 << (6 + 32),
+        }],
+    },
+    Feature {
         name: "Process posted interrupts   ",
         must_match: &[MsrMatch {
             index: 0x481,
