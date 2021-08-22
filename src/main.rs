@@ -6,6 +6,8 @@ use std::error;
 use std::io;
 use std::io::BufRead;
 
+mod aida_parse;
+
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
 #[derive(Debug)]
