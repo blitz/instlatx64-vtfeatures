@@ -9,7 +9,7 @@
 //! See [AidaCpuidDump].
 
 pub use std::collections::BTreeMap as Map;
-use std::{collections::BTreeSet as Set, iter::FromIterator, str::FromStr};
+use std::{collections::BTreeSet as Set, str::FromStr};
 
 use regex::Regex;
 
@@ -179,7 +179,13 @@ impl FromStr for AidaCpuidDump {
 
         // Time for some sanity checking.
 
-        if groups_vec.len() != Set::from_iter(groups_vec.iter().map(|(k, _v)| k)).len() {
+        if groups_vec.len()
+            != groups_vec
+                .iter()
+                .map(|(k, _v)| k)
+                .collect::<Set<&String>>()
+                .len()
+        {
             // Duplicate group names.
             //
             // TODO Better errors.
