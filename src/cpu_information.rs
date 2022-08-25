@@ -21,6 +21,27 @@ pub struct CpuidResult {
     pub edx: u32,
 }
 
+/// The registers of a [CpuidResult].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CpuidRegister {
+    Eax,
+    Ebx,
+    Ecx,
+    Edx,
+}
+
+impl CpuidResult {
+    /// Retrieve a register value from a CPUID result.
+    pub fn get(&self, reg: CpuidRegister) -> u32 {
+        match reg {
+            CpuidRegister::Eax => self.eax,
+            CpuidRegister::Ebx => self.ebx,
+            CpuidRegister::Ecx => self.ecx,
+            CpuidRegister::Edx => self.edx,
+        }
+    }
+}
+
 /// Converts a slice of 32-bit little-endian integers into a
 /// `Vec<u8>`. This also trims zero bytes at the end.
 fn dwords_to_bytes(dwords: &[u32]) -> Vec<u8> {

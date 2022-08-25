@@ -10,6 +10,7 @@ use std::str::FromStr;
 
 mod aida_parse;
 mod cpu_information;
+mod features;
 
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
