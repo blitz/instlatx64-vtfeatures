@@ -13,7 +13,7 @@ use std::{collections::BTreeSet as Set, str::FromStr};
 
 use regex::Regex;
 
-use crate::traits::{CpuInformation, CpuidQuery, CpuidResult};
+use crate::cpu_information::{CpuInformation, CpuidQuery, CpuidResult};
 
 type CpuidMap = Map<CpuidQuery, CpuidResult>;
 type MsrMap = Map<u32, u64>;

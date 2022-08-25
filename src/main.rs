@@ -2,14 +2,14 @@
 extern crate lazy_static;
 
 use aida_parse::AidaCpuidDump;
+use cpu_information::CpuInformation;
 use std::error;
 use std::io;
 use std::io::Read;
 use std::str::FromStr;
-use traits::CpuInformation;
 
 mod aida_parse;
-mod traits;
+mod cpu_information;
 
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
