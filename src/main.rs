@@ -26,25 +26,23 @@ fn try_parse_msr_line(s: &str) -> Option<MsrValue> {
             Regex::new(r"^MSR ([0-9a-fA-F]+): ([-0-9a-fA-F]+)$").expect("a valid regex");
     }
 
-    RE.captures(s)
-        .map(|c| {
-            Some(MsrValue {
-                index: u32::from_str_radix(c.get(1).unwrap().as_str(), 16).ok()?,
+    RE.captures(s).and_then(|c| {
+        Some(MsrValue {
+            index: u32::from_str_radix(c.get(1).unwrap().as_str(), 16).ok()?,
 
-                // Values have to have their hyphens removed for parsing.
-                value: u64::from_str_radix(
-                    &c.get(2)
-                        .unwrap()
-                        .as_str()
-                        .chars()
-                        .filter(|&c| c != '-')
-                        .collect::<String>(),
-                    16,
-                )
-                .ok()?,
-            })
+            // Values have to have their hyphens removed for parsing.
+            value: u64::from_str_radix(
+                &c.get(2)
+                    .unwrap()
+                    .as_str()
+                    .chars()
+                    .filter(|&c| c != '-')
+                    .collect::<String>(),
+                16,
+            )
+            .ok()?,
         })
-        .flatten()
+    })
 }
 
 struct MsrMatch {
