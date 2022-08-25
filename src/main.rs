@@ -3,6 +3,7 @@ extern crate lazy_static;
 
 use aida_parse::AidaCpuidDump;
 use cpu_information::CpuInformation;
+use features::Feature;
 use std::error;
 use std::io;
 use std::io::Read;
@@ -13,34 +14,6 @@ mod cpu_information;
 mod features;
 
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct MsrMatch {
-    index: u32,
-    must_be_set: u64,
-}
-
-#[derive(Debug, Clone, Copy)]
-struct Feature {
-    name: &'static str,
-    must_match: &'static [MsrMatch],
-}
-
-fn does_match(cpu_info: &impl CpuInformation, msr_match: &MsrMatch) -> Option<bool> {
-    cpu_info
-        .rdmsr(msr_match.index)
-        .map(|val| (val & msr_match.must_be_set) == msr_match.must_be_set)
-}
-
-// Checks whether a feature is available. The answer might be unknown,
-// if the relevant MSRs are not available.
-fn has_feature(cpu_info: &impl CpuInformation, feature: &Feature) -> Option<bool> {
-    feature
-        .must_match
-        .iter()
-        .map(|m| does_match(cpu_info, m))
-        .fold(Some(true), |acc, n| acc.and_then(|b| n.map(|c| b && c)))
-}
 
 fn tristate_to_char(tristate: Option<bool>) -> char {
     match tristate {
@@ -55,59 +28,23 @@ fn tristate_to_char(tristate: Option<bool>) -> char {
     }
 }
 
-// TODO Replace this with the Feature type from the feature module.
-static FEATURES: &[Feature] = &[
-    Feature {
-        name: "EPT                         ",
-        must_match: &[MsrMatch {
-            index: 0x48b,
-            must_be_set: 1 << (32 + 1),
-        }],
-    },
-    Feature {
-        name: "Unrestricted Guest          ",
-        must_match: &[MsrMatch {
-            index: 0x48b,
-            must_be_set: 1 << (32 + 7),
-        }],
-    },
-    Feature {
-        name: "VMCS Shadowing              ",
-        must_match: &[MsrMatch {
-            index: 0x48b,
-            must_be_set: 1 << 46,
-        }],
-    },
-    Feature {
-        name: "APIC-register virtualization",
-        must_match: &[MsrMatch {
-            index: 0x48b,
-            must_be_set: 1 << 40,
-        }],
-    },
-    Feature {
-        name: "Virtual-interrupt delivery  ",
-        must_match: &[MsrMatch {
-            index: 0x48b,
-            must_be_set: 1 << 41,
-        }],
-    },
-    Feature {
-        name: "VMX Preemption Timer        ",
-        must_match: &[MsrMatch {
-            index: 0x481,
-            must_be_set: 1 << (6 + 32),
-        }],
-    },
-    Feature {
-        name: "Process posted interrupts   ",
-        must_match: &[MsrMatch {
-            index: 0x481,
-            must_be_set: 1 << (7 + 32),
-        }],
-    },
-];
-
+fn features() -> Vec<Feature> {
+    use cpu_information::CpuidRegister::*;
+    use features::BoolExpression::*;
+    vec![
+        Feature::new("AVX", CpuidBitSet(1.into(), Ecx, 28)),
+        Feature::new("MMX", CpuidBitSet(1.into(), Edx, 23)),
+        Feature::new("SHA", CpuidBitSet(7.into(), Ebx, 29)),
+        Feature::new("ENCLV", CpuidBitSet(0x12.into(), Eax, 5)),
+        Feature::new("EPT", MsrBitSet(0x48b, 32 + 1)),
+        Feature::new("Unrestricted Guest", MsrBitSet(0x48b, 32 + 7)),
+        Feature::new("VMCS Shadowing", MsrBitSet(0x48b, 46)),
+        Feature::new("APIC-register virtualization", MsrBitSet(0x48b, 40)),
+        Feature::new("Virtual-interrupt delivery", MsrBitSet(0x48b, 41)),
+        Feature::new("VMX preemption timer", MsrBitSet(0x48b, 32 + 6)),
+        Feature::new("Process posted interrupts", MsrBitSet(0x48b, 32 + 7)),
+    ]
+}
 fn main() -> Result<()> {
     let mut input_bytes = Vec::new();
     io::stdin().read_to_end(&mut input_bytes)?;
@@ -124,11 +61,11 @@ fn main() -> Result<()> {
         aida_result.model_name().unwrap_or(unknown),
     );
 
-    for feature in FEATURES {
+    for feature in features().into_iter() {
         println!(
-            "{}: {}",
+            "{:30}: {}",
             feature.name,
-            tristate_to_char(has_feature(&aida_result, feature))
+            tristate_to_char(feature.is_present(&aida_result)),
         );
     }
 
