@@ -114,6 +114,14 @@ fn main() -> Result<()> {
 
     let aida_result = AidaCpuidDump::from_str(&input_string)?;
 
+    let unknown = "Unknown".to_owned();
+
+    println!(
+        "{} {}\n",
+        aida_result.vendor_name().unwrap_or(unknown.clone()),
+        aida_result.model_name().unwrap_or(unknown.clone()),
+    );
+
     for feature in FEATURES {
         println!(
             "{}: {}",
