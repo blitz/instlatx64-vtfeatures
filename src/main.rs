@@ -19,6 +19,7 @@ struct MsrMatch {
     must_be_set: u64,
 }
 
+#[derive(Debug, Clone, Copy)]
 struct Feature {
     name: &'static str,
     must_match: &'static [MsrMatch],
