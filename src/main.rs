@@ -55,6 +55,7 @@ fn tristate_to_char(tristate: Option<bool>) -> char {
     }
 }
 
+// TODO Replace this with the Feature type from the feature module.
 static FEATURES: &[Feature] = &[
     Feature {
         name: "EPT                         ",
