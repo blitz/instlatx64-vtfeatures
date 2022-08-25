@@ -8,7 +8,7 @@
 //!
 //! See [AidaCpuidDump].
 
-pub use std::collections::BTreeMap as Map;
+use std::collections::BTreeMap as Map;
 use std::{collections::BTreeSet as Set, str::FromStr};
 
 use regex::Regex;
@@ -27,10 +27,33 @@ pub struct CpuidResult {
     pub edx: u32,
 }
 
+pub type CpuidMap = Map<CpuidQuery, CpuidResult>;
+pub type MsrMap = Map<u32, u64>;
+
 #[derive(Debug, Clone)]
 pub struct AidaCpuidDump {
-    pub cpuid: Map<CpuidQuery, CpuidResult>,
-    pub msrs: Map<u32, u64>,
+    pub cpuid: CpuidMap,
+    pub msrs: MsrMap,
+}
+
+impl std::fmt::Display for AidaCpuidDump {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "CPUID:")?;
+        self.cpuid.iter().try_for_each(|(k, v)| {
+            writeln!(
+                f,
+                "{:08x}.{:02x}: {:08x} {:08x} {:08x} {:08x}",
+                k.leaf, k.subleaf, v.eax, v.ebx, v.ecx, v.edx
+            )
+        })?;
+
+        writeln!(f, "\nMSR:")?;
+        self.msrs
+            .iter()
+            .try_for_each(|(k, v)| writeln!(f, "{:08x}: {:016x}", k, v))?;
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -41,6 +64,8 @@ impl std::fmt::Display for ParseAidaCpuidDumpError {
         write!(f, "Failed to parse AIDA CPUID dump")
     }
 }
+
+impl std::error::Error for ParseAidaCpuidDumpError {}
 
 /// Low-level representation of a single input line after first
 /// parsing round.
