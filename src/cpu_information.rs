@@ -76,6 +76,17 @@ pub trait CpuInformation {
             .unwrap_or(0x8000_0000)
     }
 
+    /// Checks whether the CPU indicates that this query would return
+    /// something valid.
+    fn is_cpuid_query_valid(&self, query: CpuidQuery) -> bool {
+        match query.leaf >> 16 {
+            0x0000 => query.leaf <= self.max_standard_leaf(),
+            0x8000 => query.leaf <= self.max_extended_leaf(),
+
+            _ => true,
+        }
+    }
+
     /// Returns the vendor string as raw bytes.
     fn vendor_bytes(&self) -> Option<Vec<u8>> {
         self.cpuid(0.into())

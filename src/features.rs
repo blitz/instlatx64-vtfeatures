@@ -16,23 +16,29 @@ pub enum BoolExpression {
 
 impl BoolExpression {
     pub fn evaluate(&self, cpu_info: &dyn CpuInformation) -> Option<bool> {
-        Some(match self {
+        match self {
             BoolExpression::CpuidBitSet(query, reg, bit) => {
                 assert!(u32::from(*bit) < u32::BITS);
-                (cpu_info.cpuid(*query)?.get(*reg) & (1 << bit)) != 0
+
+                if cpu_info.is_cpuid_query_valid(*query) {
+                    Some(cpu_info.cpuid(*query)?.get(*reg) & (1 << bit) != 0)
+                } else {
+                    // When the CPU says the leaf is not supported, the bit is considered unset.
+                    Some(false)
+                }
             }
             BoolExpression::MsrBitSet(index, bit) => {
                 assert!(u32::from(*bit) < u64::BITS);
-                (cpu_info.rdmsr(*index)? & (1 << bit)) != 0
+                Some((cpu_info.rdmsr(*index)? & (1 << bit)) != 0)
             }
             BoolExpression::And(expr1, expr2) => {
-                expr1.evaluate(cpu_info)? && expr2.evaluate(cpu_info)?
+                Some(expr1.evaluate(cpu_info)? && expr2.evaluate(cpu_info)?)
             }
             BoolExpression::Or(expr1, expr2) => {
-                expr1.evaluate(cpu_info)? || expr2.evaluate(cpu_info)?
+                Some(expr1.evaluate(cpu_info)? || expr2.evaluate(cpu_info)?)
             }
-            BoolExpression::Not(expr) => !expr.evaluate(cpu_info)?,
-        })
+            BoolExpression::Not(expr) => Some(!expr.evaluate(cpu_info)?),
+        }
     }
 }
 
