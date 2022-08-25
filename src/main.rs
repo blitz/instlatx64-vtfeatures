@@ -2,16 +2,18 @@
 extern crate lazy_static;
 
 use aida_parse::AidaCpuidDump;
-use aida_parse::MsrMap;
 use std::error;
 use std::io;
 use std::io::Read;
 use std::str::FromStr;
+use traits::CpuInformation;
 
 mod aida_parse;
+mod traits;
 
 type Result<T> = std::result::Result<T, Box<dyn error::Error>>;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct MsrMatch {
     index: u32,
     must_be_set: u64,
@@ -22,19 +24,19 @@ struct Feature {
     must_match: &'static [MsrMatch],
 }
 
-fn does_match(msr_values: &MsrMap, msr_match: &MsrMatch) -> Option<bool> {
-    msr_values
-        .get(&msr_match.index)
+fn does_match(cpu_info: &impl CpuInformation, msr_match: &MsrMatch) -> Option<bool> {
+    cpu_info
+        .rdmsr(msr_match.index)
         .map(|val| (val & msr_match.must_be_set) == msr_match.must_be_set)
 }
 
 // Checks whether a feature is available. The answer might be unknown,
 // if the relevant MSRs are not available.
-fn has_feature(msr_values: &MsrMap, feature: &Feature) -> Option<bool> {
+fn has_feature(cpu_info: &impl CpuInformation, feature: &Feature) -> Option<bool> {
     feature
         .must_match
         .iter()
-        .map(|m| does_match(msr_values, m))
+        .map(|m| does_match(cpu_info, m))
         .fold(Some(true), |acc, n| acc.and_then(|b| n.map(|c| b && c)))
 }
 
@@ -115,7 +117,7 @@ fn main() -> Result<()> {
         println!(
             "{}: {}",
             feature.name,
-            tristate_to_char(has_feature(&aida_result.msrs, feature))
+            tristate_to_char(has_feature(&aida_result, feature))
         );
     }
 

@@ -13,27 +13,25 @@ use std::{collections::BTreeSet as Set, str::FromStr};
 
 use regex::Regex;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct CpuidQuery {
-    pub leaf: u32,
-    pub subleaf: u32,
-}
+use crate::traits::{CpuInformation, CpuidQuery, CpuidResult};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct CpuidResult {
-    pub eax: u32,
-    pub ebx: u32,
-    pub ecx: u32,
-    pub edx: u32,
-}
-
-pub type CpuidMap = Map<CpuidQuery, CpuidResult>;
-pub type MsrMap = Map<u32, u64>;
+type CpuidMap = Map<CpuidQuery, CpuidResult>;
+type MsrMap = Map<u32, u64>;
 
 #[derive(Debug, Clone)]
 pub struct AidaCpuidDump {
-    pub cpuid: CpuidMap,
-    pub msrs: MsrMap,
+    cpuid: CpuidMap,
+    msrs: MsrMap,
+}
+
+impl CpuInformation for AidaCpuidDump {
+    fn cpuid(&self, query: CpuidQuery) -> Option<CpuidResult> {
+        self.cpuid.get(&query).cloned()
+    }
+
+    fn rdmsr(&self, index: u32) -> Option<u64> {
+        self.msrs.get(&index).copied()
+    }
 }
 
 impl std::fmt::Display for AidaCpuidDump {
