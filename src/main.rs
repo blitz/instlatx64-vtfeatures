@@ -118,8 +118,8 @@ fn main() -> Result<()> {
 
     println!(
         "{} {}\n",
-        aida_result.vendor_name().unwrap_or(unknown.clone()),
-        aida_result.model_name().unwrap_or(unknown.clone()),
+        aida_result.vendor_name().unwrap_or_else(|| unknown.clone()),
+        aida_result.model_name().unwrap_or(unknown),
     );
 
     for feature in FEATURES {

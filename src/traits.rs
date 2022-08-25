@@ -26,8 +26,7 @@ pub struct CpuidResult {
 fn dwords_to_bytes(dwords: &[u32]) -> Vec<u8> {
     dwords
         .iter()
-        .map(|dw| dw.to_le_bytes())
-        .flatten()
+        .flat_map(|dw| dw.to_le_bytes())
         .take_while(|c| *c != 0)
         .collect()
 }
